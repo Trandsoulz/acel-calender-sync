@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Admin user for authentication
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // bcrypt hashed
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Calendar container for events
+model Calendar {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  description String?
+  isPublic    Boolean      @default(true)
+  token       String       @unique @default(cuid()) // Admin access token
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  events      Event[]
+  subscribers Subscriber[]
+
+  @@index([slug])
+}
+
+// Individual calendar event with targeting
+model Event {
+  id                        String   @id @default(cuid())
+  uid                       String   // Stable UID for ICS (event-{id}@hotrph.org)
+  title                     String
+  description               String?
+  startTime                 DateTime
+  endTime                   DateTime
+  timezone                  String   @default("Africa/Lagos")
+  location                  String?
+  status                    String   @default("confirmed") // confirmed, tentative, cancelled
+  
+  // Targeting criteria (empty array = everyone)
+  targetGenders             String[] @default([])
+  targetAgeMin              Int?
+  targetAgeMax              Int?
+  targetCountries           String[] @default([])
+  targetRelationshipStatuses String[] @default([])
+  
+  calendarId                String
+  calendar                  Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@unique([calendarId, uid])
+  @@index([calendarId])
+}
+
+// Subscriber with demographics for personalized feeds
+model Subscriber {
+  id                 String   @id @default(cuid())
+  name               String
+  email              String
+  phone              String?
+  gender             String   // male, female
+  country            String
+  relationshipStatus String   // single, married, divorced, widowed
+  dob                DateTime
+  feedToken          String   @unique @default(cuid()) // Unique token for personalized feed
+  platform           String?  // google, apple, outlook, other
+  interests          String[] @default([])
+  
+  calendarId         String
+  calendar           Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  
+  subscribedAt       DateTime @default(now())
+
+  @@index([calendarId])
+  @@index([feedToken])
+}

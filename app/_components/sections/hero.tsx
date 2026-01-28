@@ -46,9 +46,9 @@ export function Hero() {
 
           {/* CTA Buttons */}
           <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <Link href="/subscribe">
+            <Link href="/calendars/hotr-port-harcourt">
               <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-                Subscribe Now
+                View Calendar
                 <svg
                   className="ml-2 h-5 w-5"
                   fill="none"
@@ -59,14 +59,14 @@ export function Hero() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                    d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
                   />
                 </svg>
               </Button>
             </Link>
-            <Link href="/learn-more">
+            <Link href="/calendars/hotr-port-harcourt/subscribe">
               <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                Learn More
+                Subscribe Now
               </Button>
             </Link>
           </div>

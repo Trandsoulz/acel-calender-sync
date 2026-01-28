@@ -42,3 +42,4 @@ next-env.d.ts
 
 ssh-keygen -t ed25519 -C "bethrand2019@gmail.com"
 ssh-keygen -t ed25519 -C "bethrand2019@gmail.com".pub
+/app/generated/prisma

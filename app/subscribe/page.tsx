@@ -20,6 +20,13 @@ interface FormData {
   platform: string;
 }
 
+interface SubscriptionUrls {
+  icsUrl: string;
+  googleUrl: string;
+  appleUrl: string;
+  outlookUrl: string;
+}
+
 const initialFormData: FormData = {
   firstName: "",
   lastName: "",
@@ -33,19 +40,6 @@ const initialFormData: FormData = {
   platform: "",
 };
 
-const interestOptions = [
-  { id: "sunday-service", label: "Sunday Services" },
-  { id: "midweek-service", label: "Midweek Services" },
-  { id: "youth", label: "Youth Programs" },
-  { id: "women", label: "Women's Fellowship" },
-  { id: "men", label: "Men's Fellowship" },
-  { id: "children", label: "Children's Programs" },
-  { id: "singles", label: "Singles Programs" },
-  { id: "couples", label: "Couples/Marriage Programs" },
-  { id: "special-events", label: "Special Events & Conferences" },
-  { id: "outreach", label: "Outreach & Community Service" },
-];
-
 const countryOptions = [
   "Nigeria",
   "Ghana",
@@ -56,19 +50,13 @@ const countryOptions = [
   "Other",
 ];
 
-const platformOptions = [
-  { id: "google", label: "Google Calendar", icon: "📅" },
-  { id: "apple", label: "Apple Calendar", icon: "🍎" },
-  { id: "outlook", label: "Microsoft Outlook", icon: "📧" },
-  { id: "other", label: "Other", icon: "📆" },
-];
-
 export default function SubscribePage() {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [calendarUrl, setCalendarUrl] = useState("");
+  const [subscriptionUrls, setSubscriptionUrls] = useState<SubscriptionUrls | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -77,62 +65,79 @@ export default function SubscribePage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleInterestChange = (interestId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      interests: prev.interests.includes(interestId)
-        ? prev.interests.filter((i) => i !== interestId)
-        : [...prev.interests, interestId],
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Generate a unique token for the subscriber
-    const feedToken = crypto.randomUUID();
+    try {
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          phone: formData.phone || null,
+          gender: formData.gender,
+          country: formData.country,
+          relationshipStatus: formData.relationshipStatus,
+          dob: formData.dateOfBirth,
+          platform: formData.platform,
+          interests: formData.interests,
+          calendarSlug: "hotr-port-harcourt",
+        }),
+      });
 
-    // Save to localStorage for now
-    const subscriber = {
-      ...formData,
-      feedToken,
-      subscribedAt: new Date().toISOString(),
-    };
+      const data = await response.json();
 
-    // Get existing subscribers from localStorage
-    const existingSubscribers = JSON.parse(
-      localStorage.getItem("subscribers") || "[]"
-    );
+      if (!response.ok) {
+        throw new Error(data.error || "Subscription failed");
+      }
 
-    // Add new subscriber
-    localStorage.setItem(
-      "subscribers",
-      JSON.stringify([...existingSubscribers, subscriber])
-    );
-
-    // Generate calendar URL (this would be a real URL in production)
-    const baseUrl = window.location.origin;
-    const generatedUrl = `${baseUrl}/calendar/hotr-phc/feed/${feedToken}.ics`;
-
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    setCalendarUrl(generatedUrl);
-    setIsSubmitting(false);
-    setIsSuccess(true);
+      setSubscriptionUrls(data.urls);
+      setIsSuccess(true);
+    } catch (error) {
+      console.error("Subscription error:", error);
+      alert("Failed to subscribe. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const nextStep = () => setStep((prev) => Math.min(prev + 1, 3));
+  const handleCopyLink = () => {
+    if (subscriptionUrls) {
+      navigator.clipboard.writeText(subscriptionUrls.icsUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleSync = (platform: string) => {
+    if (!subscriptionUrls) return;
+
+    switch (platform) {
+      case "google":
+        window.open(subscriptionUrls.googleUrl, "_blank");
+        break;
+      case "apple":
+        window.location.href = subscriptionUrls.appleUrl;
+        break;
+      case "outlook":
+        window.open(subscriptionUrls.outlookUrl, "_blank");
+        break;
+      default:
+        handleCopyLink();
+    }
+  };
+
+  const nextStep = () => setStep((prev) => Math.min(prev + 1, 2));
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
 
   const isStep1Valid =
     formData.firstName && formData.lastName && formData.email;
   const isStep2Valid =
     formData.gender && formData.dateOfBirth && formData.relationshipStatus;
-  const isStep3Valid = formData.interests.length > 0 && formData.platform;
 
-  if (isSuccess) {
+  if (isSuccess && subscriptionUrls) {
     return (
       <>
         <Navbar />
@@ -140,9 +145,9 @@ export default function SubscribePage() {
           <Container>
             <div className="mx-auto max-w-2xl text-center">
               {/* Success Icon */}
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-accent/20 to-accent/5 ring-4 ring-accent/20">
                 <svg
-                  className="h-10 w-10 text-green-600 dark:text-green-400"
+                  className="h-12 w-12 text-accent"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth={2}
@@ -156,109 +161,142 @@ export default function SubscribePage() {
                 </svg>
               </div>
 
-              <h1 className="mt-6 text-3xl font-bold text-foreground">
-                You&apos;re All Set! 🎉
+              <h1 className="mt-8 text-3xl font-bold text-foreground sm:text-4xl">
+                Welcome, {formData.firstName}! 🎉
               </h1>
-              <p className="mt-4 text-lg text-muted-foreground">
-                Welcome to the HOTR Port Harcourt calendar community,{" "}
-                {formData.firstName}! Your personalized calendar feed is ready.
+              <p className="mt-4 text-lg text-muted-foreground max-w-md mx-auto">
+                Your personalized HOTR calendar is ready. Sync it now to never miss an event!
               </p>
 
-              {/* Calendar URL Box */}
-              <div className="mt-8 rounded-2xl bg-muted p-6 ring-1 ring-border">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Your Personal Calendar Link
+              {/* Sync Buttons */}
+              <div className="mt-10 space-y-4">
+                <h2 className="text-lg font-semibold text-foreground mb-6">
+                  Choose your calendar app to sync:
                 </h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Copy this link and add it to your calendar app
+                
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {/* Google Calendar */}
+                  <button
+                    onClick={() => handleSync("google")}
+                    className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-white dark:bg-white/10 border border-border hover:border-accent hover:shadow-lg transition-all group"
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 via-green-500 to-yellow-500 p-0.5">
+                      <div className="w-full h-full rounded-2xl bg-white dark:bg-gray-900 flex items-center justify-center">
+                        <svg className="w-8 h-8" viewBox="0 0 24 24">
+                          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <span className="font-medium text-foreground group-hover:text-accent transition-colors">
+                      Google Calendar
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Click to add
+                    </span>
+                  </button>
+
+                  {/* Apple Calendar */}
+                  <button
+                    onClick={() => handleSync("apple")}
+                    className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-white dark:bg-white/10 border border-border hover:border-accent hover:shadow-lg transition-all group"
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                      <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                      </svg>
+                    </div>
+                    <span className="font-medium text-foreground group-hover:text-accent transition-colors">
+                      Apple Calendar
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Opens Calendar app
+                    </span>
+                  </button>
+
+                  {/* Outlook */}
+                  <button
+                    onClick={() => handleSync("outlook")}
+                    className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-white dark:bg-white/10 border border-border hover:border-accent hover:shadow-lg transition-all group"
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
+                      <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.86t.1-.87q.1-.43.34-.76.22-.34.57-.54.36-.2.87-.2t.86.2q.35.21.57.55.22.34.31.77.1.43.1.88zM24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.5V2.55q0-.44.3-.75.3-.3.75-.3h12.9q.44 0 .75.3.3.3.3.75V12zm-6-8.25v3h3v-3zm0 4.5v3h3v-3zm0 4.5v1.83l3.05-1.83zm-5.25-9v3h3.75v-3zm0 4.5v3h3.75v-3zm0 4.5v2.03l2.41 1.5 1.34-.8v-2.73zM9 3.75V6h2l.13.01.12.04v-2.3zM5.98 15.98q.9 0 1.6-.3.7-.32 1.19-.86.48-.55.73-1.28.25-.74.25-1.61 0-.83-.25-1.55-.24-.71-.71-1.24t-1.15-.83q-.68-.3-1.55-.3-.92 0-1.64.3-.71.3-1.2.85-.5.54-.75 1.3-.25.74-.25 1.63 0 .85.26 1.56.26.72.74 1.23.48.52 1.17.81.69.3 1.56.3zM7.5 21h12.39L12 16.08V17q0 .41-.3.7-.29.3-.7.3H7.5zm15-.13v-7.24l-5.9 3.54Z"/>
+                      </svg>
+                    </div>
+                    <span className="font-medium text-foreground group-hover:text-accent transition-colors">
+                      Outlook
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Click to add
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Copy Link Option */}
+              <div className="mt-10 pt-8 border-t border-border">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Or copy your personal calendar link:
                 </p>
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <div className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
                   <input
                     type="text"
                     readOnly
-                    value={calendarUrl}
-                    className="flex-1 rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground"
+                    value={subscriptionUrls.icsUrl}
+                    className="flex-1 rounded-lg border border-border bg-muted px-4 py-3 text-sm text-foreground font-mono truncate"
                   />
                   <Button
-                    variant="secondary"
-                    onClick={() => navigator.clipboard.writeText(calendarUrl)}
+                    variant="outline"
+                    onClick={handleCopyLink}
+                    className="shrink-0"
                   >
-                    Copy Link
+                    {copied ? (
+                      <>
+                        <svg className="w-4 h-4 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                        </svg>
+                        Copy Link
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
 
-              {/* Instructions */}
-              <div className="mt-8 text-left rounded-2xl bg-muted/50 p-6 ring-1 ring-border">
-                <h3 className="font-semibold text-foreground">
-                  How to add to your calendar:
-                </h3>
-                <div className="mt-4 space-y-4 text-sm text-muted-foreground">
-                  {formData.platform === "google" && (
-                    <div>
-                      <p className="font-medium text-foreground">
-                        Google Calendar:
-                      </p>
-                      <ol className="mt-2 list-decimal list-inside space-y-1">
-                        <li>Open Google Calendar on your computer</li>
-                        <li>
-                          Click the &quot;+&quot; next to &quot;Other
-                          calendars&quot;
-                        </li>
-                        <li>Select &quot;From URL&quot;</li>
-                        <li>Paste your calendar link and click &quot;Add calendar&quot;</li>
-                      </ol>
-                    </div>
-                  )}
-                  {formData.platform === "apple" && (
-                    <div>
-                      <p className="font-medium text-foreground">
-                        Apple Calendar:
-                      </p>
-                      <ol className="mt-2 list-decimal list-inside space-y-1">
-                        <li>Open Calendar app on your iPhone/Mac</li>
-                        <li>Go to File → New Calendar Subscription</li>
-                        <li>Paste your calendar link</li>
-                        <li>Click Subscribe</li>
-                      </ol>
-                    </div>
-                  )}
-                  {formData.platform === "outlook" && (
-                    <div>
-                      <p className="font-medium text-foreground">Outlook:</p>
-                      <ol className="mt-2 list-decimal list-inside space-y-1">
-                        <li>Open Outlook Calendar</li>
-                        <li>Click &quot;Add calendar&quot; → &quot;Subscribe from web&quot;</li>
-                        <li>Paste your calendar link</li>
-                        <li>Click Import</li>
-                      </ol>
-                    </div>
-                  )}
-                  {formData.platform === "other" && (
-                    <div>
-                      <p className="font-medium text-foreground">
-                        Other Calendar Apps:
-                      </p>
-                      <p className="mt-2">
-                        Look for an option to &quot;Subscribe to calendar&quot; or &quot;Add
-                        calendar from URL&quot; in your calendar app settings, then
-                        paste your calendar link.
-                      </p>
-                    </div>
-                  )}
+              {/* Info Box */}
+              <div className="mt-10 rounded-2xl bg-accent/10 p-6 text-left">
+                <div className="flex gap-4">
+                  <div className="shrink-0">
+                    <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">Your calendar will stay updated!</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Events are automatically synced to your calendar. When we add new events or make changes, they&apos;ll appear in your calendar automatically.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
+              {/* Back Home */}
+              <div className="mt-10">
                 <Link href="/">
-                  <Button variant="secondary" size="lg">
+                  <Button variant="ghost" size="lg">
+                    <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                    </svg>
                     Back to Home
-                  </Button>
-                </Link>
-                <Link href="/learn-more">
-                  <Button variant="outline" size="lg">
-                    Learn More
                   </Button>
                 </Link>
               </div>
@@ -304,20 +342,20 @@ export default function SubscribePage() {
             {/* Progress Steps */}
             <div className="mb-10">
               <div className="flex items-center justify-center">
-                {[1, 2, 3].map((s) => (
+                {[1, 2].map((s) => (
                   <div key={s} className="flex items-center">
                     <div
                       className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
                         step >= s
-                          ? "bg-accent text-accent-foreground"
+                          ? "bg-accent text-black"
                           : "bg-muted text-muted-foreground ring-1 ring-border"
                       }`}
                     >
                       {s}
                     </div>
-                    {s < 3 && (
+                    {s < 2 && (
                       <div
-                        className={`h-0.5 w-20 sm:w-28 transition-colors ${
+                        className={`h-0.5 w-24 sm:w-32 transition-colors ${
                           step > s ? "bg-accent" : "bg-border"
                         }`}
                       />
@@ -325,7 +363,7 @@ export default function SubscribePage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-4 flex justify-center md:gap-20 gap-16 text-sm">
+              <div className="mt-4 flex justify-center gap-24 sm:gap-32 text-sm">
                 <span
                   className={
                     step >= 1 ? "text-foreground font-medium" : "text-muted-foreground"
@@ -339,13 +377,6 @@ export default function SubscribePage() {
                   }
                 >
                   About You
-                </span>
-                <span
-                  className={
-                    step >= 3 ? "text-foreground font-medium" : "text-muted-foreground"
-                  }
-                >
-                  Preferences
                 </span>
               </div>
             </div>
@@ -537,97 +568,6 @@ export default function SubscribePage() {
                     </div>
                   </div>
                 )}
-
-                {/* Step 3: Preferences */}
-                {step === 3 && (
-                  <div className="space-y-6">
-                    <h2 className="text-xl font-semibold text-foreground">
-                      Your Preferences
-                    </h2>
-
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-3">
-                        What events are you interested in? *
-                      </label>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {interestOptions.map((interest) => (
-                          <label
-                            key={interest.id}
-                            className={`flex items-center gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${
-                              formData.interests.includes(interest.id)
-                                ? "border-accent bg-accent/10"
-                                : "border-border bg-background hover:border-accent/50"
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={formData.interests.includes(interest.id)}
-                              onChange={() => handleInterestChange(interest.id)}
-                              className="sr-only"
-                            />
-                            <div
-                              className={`flex h-5 w-5 items-center justify-center rounded border ${
-                                formData.interests.includes(interest.id)
-                                  ? "border-accent bg-accent text-accent-foreground"
-                                  : "border-border"
-                              }`}
-                            >
-                              {formData.interests.includes(interest.id) && (
-                                <svg
-                                  className="h-3 w-3"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  strokeWidth={3}
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M4.5 12.75l6 6 9-13.5"
-                                  />
-                                </svg>
-                              )}
-                            </div>
-                            <span className="text-sm text-foreground">
-                              {interest.label}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-3">
-                        Which calendar app do you use? *
-                      </label>
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {platformOptions.map((platform) => (
-                          <label
-                            key={platform.id}
-                            className={`flex items-center gap-3 rounded-lg border p-4 cursor-pointer transition-colors ${
-                              formData.platform === platform.id
-                                ? "border-accent bg-accent/10"
-                                : "border-border bg-background hover:border-accent/50"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="platform"
-                              value={platform.id}
-                              checked={formData.platform === platform.id}
-                              onChange={handleInputChange}
-                              className="sr-only"
-                            />
-                            <span className="text-2xl">{platform.icon}</span>
-                            <span className="text-sm text-foreground">
-                              {platform.label}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Navigation Buttons */}
@@ -658,16 +598,13 @@ export default function SubscribePage() {
                   <div />
                 )}
 
-                {step < 3 ? (
+                {step < 2 ? (
                   <Button
                     type="button"
                     variant="secondary"
                     size="lg"
                     onClick={nextStep}
-                    disabled={
-                      (step === 1 && !isStep1Valid) ||
-                      (step === 2 && !isStep2Valid)
-                    }
+                    disabled={!isStep1Valid}
                     className="sm:ml-auto"
                   >
                     Next Step
@@ -690,7 +627,7 @@ export default function SubscribePage() {
                     type="submit"
                     variant="secondary"
                     size="lg"
-                    disabled={!isStep3Valid || isSubmitting}
+                    disabled={!isStep2Valid || isSubmitting}
                     className="sm:ml-auto"
                   >
                     {isSubmitting ? (
@@ -729,7 +666,7 @@ export default function SubscribePage() {
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            d="M4.5 12.75l6 6 9-13.5"
+                            d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
                           />
                         </svg>
                       </>
