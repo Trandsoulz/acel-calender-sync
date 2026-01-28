@@ -1,5 +1,5 @@
-import { Navbar, Footer } from "@/components/layout";
-import { Hero } from "@/components/sections";
+import { Navbar, Footer } from "@/app/_components/layout";
+import { Hero } from "@/app/_components/sections";
 
 export default function Home() {
   return (
