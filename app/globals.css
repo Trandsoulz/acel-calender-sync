@@ -2,12 +2,34 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0a0a0a;
+  
+  /* HOTR Brand Colors */
+  --primary: #0a0a0a;
+  --primary-foreground: #ffffff;
+  --accent: #D4A853;
+  --accent-foreground: #0a0a0a;
+  --accent-light: #F5E6C8;
+  --accent-dark: #B8923D;
+  
+  /* Neutral colors */
+  --muted: #f5f5f4;
+  --muted-foreground: #737373;
+  --border: #e5e5e5;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-light: var(--accent-light);
+  --color-accent-dark: var(--accent-dark);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -16,6 +38,15 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --primary: #ffffff;
+    --primary-foreground: #0a0a0a;
+    --accent: #D4A853;
+    --accent-foreground: #0a0a0a;
+    --accent-light: #3D3525;
+    --accent-dark: #E8BC6A;
+    --muted: #1c1c1c;
+    --muted-foreground: #a3a3a3;
+    --border: #262626;
   }
 }
 

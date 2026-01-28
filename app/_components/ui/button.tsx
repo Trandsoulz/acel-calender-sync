@@ -12,13 +12,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        "bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500",
+        "bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-accent",
       secondary:
-        "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 focus:ring-zinc-500 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700",
+        "bg-accent text-accent-foreground hover:bg-accent-dark focus:ring-accent",
       outline:
-        "border border-zinc-300 bg-transparent text-zinc-900 hover:bg-zinc-100 focus:ring-zinc-500 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-800",
+        "border border-border bg-transparent text-foreground hover:bg-muted focus:ring-accent",
       ghost:
-        "bg-transparent text-zinc-900 hover:bg-zinc-100 focus:ring-zinc-500 dark:text-zinc-100 dark:hover:bg-zinc-800",
+        "bg-transparent text-foreground hover:bg-muted focus:ring-accent",
     };
 
     const sizes = {
