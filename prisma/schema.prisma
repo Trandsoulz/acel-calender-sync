@@ -78,6 +78,12 @@ model Subscriber {
   platform           String?  // google, apple, outlook, other
   interests          String[] @default([])
   
+  // Google Calendar integration
+  googleAccessToken  String?
+  googleRefreshToken String?
+  googleTokenExpiry  DateTime?
+  googleCalendarId   String?  // ID of the calendar we created in their account
+  
   calendarId         String
   calendar           Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
   

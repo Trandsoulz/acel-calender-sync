@@ -56,6 +56,7 @@ export default function SubscribePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [subscriptionUrls, setSubscriptionUrls] = useState<SubscriptionUrls | null>(null);
+  const [subscriberId, setSubscriberId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const handleInputChange = (
@@ -94,6 +95,7 @@ export default function SubscribePage() {
       }
 
       setSubscriptionUrls(data.urls);
+      setSubscriberId(data.subscriber.id);
       setIsSuccess(true);
     } catch (error) {
       console.error("Subscription error:", error);
@@ -109,6 +111,12 @@ export default function SubscribePage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const handleGoogleDirectSync = () => {
+    if (!subscriberId) return;
+    // Redirect to Google OAuth flow
+    window.location.href = `/api/auth/google?subscriberId=${subscriberId}&calendarSlug=hotr-port-harcourt`;
   };
 
   const handleSync = (platform: string) => {
@@ -168,21 +176,27 @@ export default function SubscribePage() {
                 Your personalized HOTR calendar is ready. Sync it now to never miss an event!
               </p>
 
-              {/* Sync Buttons */}
-              <div className="mt-10 space-y-4">
-                <h2 className="text-lg font-semibold text-foreground mb-6">
-                  Choose your calendar app to sync:
-                </h2>
-                
-                <div className="grid gap-4 sm:grid-cols-3">
-                  {/* Google Calendar */}
+              {/* Recommended: Google Direct Sync */}
+              <div className="mt-10">
+                <div className="rounded-2xl bg-gradient-to-br from-green-500/10 to-blue-500/10 border-2 border-green-500/30 p-6">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      ✓ RECOMMENDED
+                    </span>
+                  </div>
+                  <h2 className="text-lg font-semibold text-foreground mb-2">
+                    Connect with Google Calendar
+                  </h2>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Best experience! Events sync automatically to both web and mobile - no extra steps needed.
+                  </p>
                   <button
-                    onClick={() => handleSync("google")}
-                    className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-white dark:bg-white/10 border border-border hover:border-accent hover:shadow-lg transition-all group"
+                    onClick={handleGoogleDirectSync}
+                    className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-white dark:bg-white/10 border-2 border-green-500/50 hover:border-green-500 hover:shadow-lg transition-all group"
                   >
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 via-green-500 to-yellow-500 p-0.5">
-                      <div className="w-full h-full rounded-2xl bg-white dark:bg-gray-900 flex items-center justify-center">
-                        <svg className="w-8 h-8" viewBox="0 0 24 24">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-green-500 to-yellow-500 p-0.5">
+                      <div className="w-full h-full rounded-xl bg-white dark:bg-gray-900 flex items-center justify-center">
+                        <svg className="w-5 h-5" viewBox="0 0 24 24">
                           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -190,54 +204,64 @@ export default function SubscribePage() {
                         </svg>
                       </div>
                     </div>
-                    <span className="font-medium text-foreground group-hover:text-accent transition-colors">
-                      Google Calendar
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Click to add
-                    </span>
-                  </button>
-
-                  {/* Apple Calendar */}
-                  <button
-                    onClick={() => handleSync("apple")}
-                    className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-white dark:bg-white/10 border border-border hover:border-accent hover:shadow-lg transition-all group"
-                  >
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                      <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                      </svg>
-                    </div>
-                    <span className="font-medium text-foreground group-hover:text-accent transition-colors">
-                      Apple Calendar
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Opens Calendar app
-                    </span>
-                  </button>
-
-                  {/* Outlook */}
-                  <button
-                    onClick={() => handleSync("outlook")}
-                    className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-white dark:bg-white/10 border border-border hover:border-accent hover:shadow-lg transition-all group"
-                  >
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-                      <svg className="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.86t.1-.87q.1-.43.34-.76.22-.34.57-.54.36-.2.87-.2t.86.2q.35.21.57.55.22.34.31.77.1.43.1.88zM24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.5V2.55q0-.44.3-.75.3-.3.75-.3h12.9q.44 0 .75.3.3.3.3.75V12zm-6-8.25v3h3v-3zm0 4.5v3h3v-3zm0 4.5v1.83l3.05-1.83zm-5.25-9v3h3.75v-3zm0 4.5v3h3.75v-3zm0 4.5v2.03l2.41 1.5 1.34-.8v-2.73zM9 3.75V6h2l.13.01.12.04v-2.3zM5.98 15.98q.9 0 1.6-.3.7-.32 1.19-.86.48-.55.73-1.28.25-.74.25-1.61 0-.83-.25-1.55-.24-.71-.71-1.24t-1.15-.83q-.68-.3-1.55-.3-.92 0-1.64.3-.71.3-1.2.85-.5.54-.75 1.3-.25.74-.25 1.63 0 .85.26 1.56.26.72.74 1.23.48.52 1.17.81.69.3 1.56.3zM7.5 21h12.39L12 16.08V17q0 .41-.3.7-.29.3-.7.3H7.5zm15-.13v-7.24l-5.9 3.54Z"/>
-                      </svg>
-                    </div>
-                    <span className="font-medium text-foreground group-hover:text-accent transition-colors">
-                      Outlook
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Click to add
+                    <span className="font-semibold text-foreground group-hover:text-green-500 transition-colors">
+                      Sign in with Google
                     </span>
                   </button>
                 </div>
               </div>
 
+              {/* Alternative Options */}
+              <div className="mt-8">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Or use traditional calendar subscription:
+                </p>
+                
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {/* Apple Calendar */}
+                  <button
+                    onClick={() => handleSync("apple")}
+                    className="flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-white/10 border border-border hover:border-accent hover:shadow-lg transition-all group"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center shrink-0">
+                      <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <span className="font-medium text-foreground group-hover:text-accent transition-colors block">
+                        Apple Calendar
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Opens Calendar app
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Outlook */}
+                  <button
+                    onClick={() => handleSync("outlook")}
+                    className="flex items-center gap-3 p-4 rounded-xl bg-white dark:bg-white/10 border border-border hover:border-accent hover:shadow-lg transition-all group"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shrink-0">
+                      <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.86t.1-.87q.1-.43.34-.76.22-.34.57-.54.36-.2.87-.2t.86.2q.35.21.57.55.22.34.31.77.1.43.1.88zM24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.5V2.55q0-.44.3-.75.3-.3.75-.3h12.9q.44 0 .75.3.3.3.3.75V12zm-6-8.25v3h3v-3zm0 4.5v3h3v-3zm0 4.5v1.83l3.05-1.83zm-5.25-9v3h3.75v-3zm0 4.5v3h3.75v-3zm0 4.5v2.03l2.41 1.5 1.34-.8v-2.73zM9 3.75V6h2l.13.01.12.04v-2.3zM5.98 15.98q.9 0 1.6-.3.7-.32 1.19-.86.48-.55.73-1.28.25-.74.25-1.61 0-.83-.25-1.55-.24-.71-.71-1.24t-1.15-.83q-.68-.3-1.55-.3-.92 0-1.64.3-.71.3-1.2.85-.5.54-.75 1.3-.25.74-.25 1.63 0 .85.26 1.56.26.72.74 1.23.48.52 1.17.81.69.3 1.56.3zM7.5 21h12.39L12 16.08V17q0 .41-.3.7-.29.3-.7.3H7.5zm15-.13v-7.24l-5.9 3.54Z"/>
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <span className="font-medium text-foreground group-hover:text-accent transition-colors block">
+                        Outlook
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Click to add
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               {/* Copy Link Option */}
-              <div className="mt-10 pt-8 border-t border-border">
+              <div className="mt-8 pt-6 border-t border-border">
                 <p className="text-sm text-muted-foreground mb-4">
                   Or copy your personal calendar link:
                 </p>
@@ -285,6 +309,37 @@ export default function SubscribePage() {
                     <p className="mt-1 text-sm text-muted-foreground">
                       Events are automatically synced to your calendar. When we add new events or make changes, they&apos;ll appear in your calendar automatically.
                     </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Users Info Box */}
+              <div className="mt-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 p-6 text-left">
+                <div className="flex gap-4">
+                  <div className="shrink-0">
+                    <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">📱 Mobile Users - Important!</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      After syncing, you may need to <strong className="text-foreground">enable the calendar</strong> in your app:
+                    </p>
+                    <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-500">•</span>
+                        <span><strong className="text-foreground">Google Calendar:</strong> Open the app → Menu (☰) → Check the box next to &quot;HOTR Port Harcourt&quot;</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-500">•</span>
+                        <span><strong className="text-foreground">Apple Calendar:</strong> Settings → Calendar → Tap to enable the subscribed calendar</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-500">•</span>
+                        <span><strong className="text-foreground">Outlook:</strong> Open the app → Tap account icon → Enable the calendar under subscriptions</span>
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </div>
