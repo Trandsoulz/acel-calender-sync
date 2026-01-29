@@ -1,11 +1,13 @@
 import { google } from "googleapis";
 
-// Google OAuth2 configuration
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/google/callback`
-);
+// Create OAuth2 client dynamically to ensure env vars are loaded
+function getOAuth2Client() {
+  return new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/google/callback`
+  );
+}
 
 // Scopes needed for calendar access
 const SCOPES = [
@@ -18,6 +20,7 @@ const SCOPES = [
  * Generate the Google OAuth URL for user authorization
  */
 export function getGoogleAuthUrl(state: string): string {
+  const oauth2Client = getOAuth2Client();
   return oauth2Client.generateAuthUrl({
     access_type: "offline", // Get refresh token
     scope: SCOPES,
@@ -30,6 +33,7 @@ export function getGoogleAuthUrl(state: string): string {
  * Exchange authorization code for tokens
  */
 export async function getTokensFromCode(code: string) {
+  const oauth2Client = getOAuth2Client();
   const { tokens } = await oauth2Client.getToken(code);
   return tokens;
 }
@@ -41,11 +45,7 @@ export function getAuthenticatedClient(
   accessToken: string,
   refreshToken: string | null
 ) {
-  const client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/google/callback`
-  );
+  const client = getOAuth2Client();
 
   client.setCredentials({
     access_token: accessToken,
@@ -99,6 +99,24 @@ export async function createHotrCalendar(
 }
 
 /**
+ * Convert an event ID to a valid Google Calendar event ID
+ * Google requires: 5-1024 chars, only lowercase a-v and digits 0-9 (base32hex)
+ */
+function toGoogleEventId(id: string): string {
+  // Convert each character to its hex code, which gives us 0-9 and a-f
+  // This ensures we only use valid characters
+  let result = "";
+  for (const char of id) {
+    result += char.charCodeAt(0).toString(16);
+  }
+  // Ensure minimum length of 5
+  while (result.length < 5) {
+    result += "0";
+  }
+  return result.toLowerCase();
+}
+
+/**
  * Sync an event to a subscriber's Google Calendar
  */
 export async function syncEventToGoogleCalendar(
@@ -119,6 +137,9 @@ export async function syncEventToGoogleCalendar(
   const auth = getAuthenticatedClient(accessToken, refreshToken);
   const calendar = google.calendar({ version: "v3", auth });
 
+  // Google Calendar event IDs have strict requirements
+  const googleEventId = toGoogleEventId(event.id);
+
   const eventData = {
     summary: event.title,
     description: event.description || undefined,
@@ -138,7 +159,7 @@ export async function syncEventToGoogleCalendar(
     // Try to update existing event first
     await calendar.events.update({
       calendarId: googleCalendarId,
-      eventId: event.id,
+      eventId: googleEventId,
       requestBody: eventData,
     });
   } catch {
@@ -147,7 +168,7 @@ export async function syncEventToGoogleCalendar(
       calendarId: googleCalendarId,
       requestBody: {
         ...eventData,
-        id: event.id,
+        id: googleEventId,
       },
     });
   }
@@ -165,10 +186,13 @@ export async function deleteEventFromGoogleCalendar(
   const auth = getAuthenticatedClient(accessToken, refreshToken);
   const calendar = google.calendar({ version: "v3", auth });
 
+  // Convert to valid Google event ID format
+  const googleEventId = toGoogleEventId(eventId);
+
   try {
     await calendar.events.delete({
       calendarId: googleCalendarId,
-      eventId: eventId,
+      eventId: googleEventId,
     });
   } catch {
     // Event might not exist, ignore error
@@ -210,10 +234,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<{
   accessToken: string;
   expiryDate: Date;
 }> {
-  const client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET
-  );
+  const client = getOAuth2Client();
 
   client.setCredentials({
     refresh_token: refreshToken,

@@ -30,21 +30,27 @@ export async function GET(request: NextRequest) {
     // Decode state to get subscriber info
     const stateData = JSON.parse(Buffer.from(state, "base64").toString());
     const { subscriberId, calendarSlug } = stateData;
+    
+    console.log("OAuth callback - subscriberId:", subscriberId, "calendarSlug:", calendarSlug);
 
     // Exchange code for tokens
     const tokens = await getTokensFromCode(code);
+    console.log("Got tokens:", !!tokens.access_token, !!tokens.refresh_token);
 
     if (!tokens.access_token) {
       throw new Error("No access token received");
     }
 
     // Create HOTR calendar in user's Google Calendar
+    console.log("Creating HOTR calendar...");
     const googleCalendarId = await createHotrCalendar(
       tokens.access_token,
       tokens.refresh_token || null
     );
+    console.log("Created calendar:", googleCalendarId);
 
     // Update subscriber with Google tokens
+    console.log("Updating subscriber...");
     const subscriber = await prisma.subscriber.update({
       where: { id: subscriberId },
       data: {

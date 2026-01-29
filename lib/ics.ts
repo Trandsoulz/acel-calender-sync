@@ -1,5 +1,8 @@
 import { createEvents, type EventAttributes } from "ics";
 
+// Default church location
+const DEFAULT_LOCATION = "House on The Rock, Stadium Road, Port Harcourt";
+
 interface CalendarEvent {
   id: string;
   uid: string;
@@ -46,7 +49,7 @@ export async function generateIcsContent({
         end.getHours(),
         end.getMinutes(),
       ] as [number, number, number, number, number],
-      location: event.location || undefined,
+      location: event.location || DEFAULT_LOCATION,
       status: event.status.toUpperCase() as "TENTATIVE" | "CONFIRMED" | "CANCELLED",
       calName: calendarName,
       productId: "hotr-calendar-sync",
