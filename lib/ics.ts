@@ -1,7 +1,7 @@
 import { createEvents, type EventAttributes } from "ics";
 
 // Default church location
-const DEFAULT_LOCATION = "House on The Rock, Stadium Road, Port Harcourt";
+const DEFAULT_LOCATION = "PLOT F/23 SANI ABACHA ROAD, GRA PHASE III, PORTHARCOURT";
 
 interface CalendarEvent {
   id: string;
