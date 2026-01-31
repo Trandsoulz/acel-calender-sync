@@ -1,5 +1,39 @@
 import { google } from "googleapis";
 
+// Default event description footer with church info
+const DEFAULT_DESCRIPTION_FOOTER = `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MORE INFORMATION
+
+📱 SOCIAL MEDIA
+• Facebook: https://www.facebook.com/houseontherockportharcourt
+• Instagram: https://www.instagram.com/hotrportharcourt
+• TikTok: https://www.tiktok.com/@hotrportharcourt
+
+🌐 OFFICIAL WEBSITE
+https://www.hotrportharcourt.com
+
+📞 CONTACT US
+• Phone: +234 903 989 3477
+• WhatsApp: +234 809 111 8522
+
+📲 OFFICIAL WHATSAPP CHANNEL
+Get church flyers, service invites, and videos to share!
+https://whatsapp.com/channel/0029Va4Ul825kg7Az6a5T03e
+
+📺 LIVESTREAM LINKS
+• Facebook: https://www.facebook.com/houseontherockportharcourt
+• YouTube: https://youtube.com/@houseontherockportharcourt
+• iRadio: https://www.heritageiradio.com
+
+✅ ATTENDANCE & REGISTRATION
+Get barcode for check-in: https://www.member.hotrportharcourt.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+House on the Rock, Port Harcourt`;
+
 // Create OAuth2 client dynamically to ensure env vars are loaded
 function getOAuth2Client() {
   return new google.auth.OAuth2(
@@ -140,9 +174,12 @@ export async function syncEventToGoogleCalendar(
   // Google Calendar event IDs have strict requirements
   const googleEventId = toGoogleEventId(event.id);
 
+  // Build description: admin's description + default footer
+  const fullDescription = (event.description || "") + DEFAULT_DESCRIPTION_FOOTER;
+
   const eventData = {
     summary: event.title,
-    description: event.description || undefined,
+    description: fullDescription,
     location: event.location || undefined,
     start: {
       dateTime: event.startTime.toISOString(),

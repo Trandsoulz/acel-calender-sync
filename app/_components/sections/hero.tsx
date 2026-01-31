@@ -1,9 +1,56 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Container } from "@/app/_components/ui/container";
 import { Button } from "@/app/_components/ui/button";
 
+interface CalendarEvent {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+}
+
 export function Hero() {
+  const [currentDate] = useState(new Date());
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  
+  // Get current month info
+  const currentMonth = currentDate.toLocaleDateString("en-US", { month: "long" });
+  const currentYear = currentDate.getFullYear();
+  const firstDayOfMonth = new Date(currentYear, currentDate.getMonth(), 1).getDay();
+  const daysInMonth = new Date(currentYear, currentDate.getMonth() + 1, 0).getDate();
+  
+  // Fetch events from the main calendar
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        // Try to fetch from the main HOTR calendar with month view
+        const response = await fetch("/api/calendars/hotr-port-harcourt/events?view=month");
+        if (response.ok) {
+          const data = await response.json();
+          setEvents(data.events || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch events:", error);
+      }
+    };
+    fetchEvents();
+  }, []);
+  
+  // Check if a specific day has events
+  const getEventsForDay = (day: number) => {
+    return events.filter((event) => {
+      const eventDate = new Date(event.startTime);
+      return (
+        eventDate.getDate() === day &&
+        eventDate.getMonth() === currentDate.getMonth() &&
+        eventDate.getFullYear() === currentYear
+      );
+    });
+  };
   return (
     <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
       {/* Background gradient */}
@@ -116,7 +163,7 @@ export function Hero() {
                   </div>
                   <div className="flex-1 text-center">
                     <span className="text-xs sm:text-sm font-medium text-muted-foreground">
-                      January 2026 - HOTR PHC Events
+                      {currentMonth} {currentYear} - HOTR PHC Events
                     </span>
                   </div>
                 </div>
@@ -132,37 +179,40 @@ export function Hero() {
                       </div>
                     )
                   )}
-                  {Array.from({ length: 35 }, (_, i) => {
-                    const day = i - 3; // Start from Thursday (Jan 1, 2026)
-                    const isCurrentMonth = day >= 1 && day <= 31;
-                    const isSunday = (i % 7) === 0 && isCurrentMonth;
-                    const isTuesday = (i % 7) === 2 && isCurrentMonth;
-                    const hasSpecialEvent = [11, 18, 25].includes(day); // Special events on certain Sundays
+                  {Array.from({ length: 42 }, (_, i) => {
+                    const day = i - firstDayOfMonth + 1;
+                    const isCurrentMonth = day >= 1 && day <= daysInMonth;
+                    const isToday = isCurrentMonth && day === currentDate.getDate();
+                    const dayEvents = isCurrentMonth ? getEventsForDay(day) : [];
+                    
                     return (
                       <div
                         key={i}
                         className={`min-h-[60px] sm:min-h-[80px] bg-background p-1.5 sm:p-2 ${
                           !isCurrentMonth ? "opacity-40" : ""
-                        }`}
+                        } ${isToday ? "ring-2 ring-accent ring-inset" : ""}`}
                       >
                         {isCurrentMonth && (
                           <>
-                            <span className="text-xs sm:text-sm text-muted-foreground">
+                            <span className={`text-xs sm:text-sm ${isToday ? "font-bold text-accent" : "text-muted-foreground"}`}>
                               {day}
                             </span>
-                            {isSunday && (
-                              <div className="mt-1 rounded bg-accent/20 px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-xs font-medium text-accent-dark truncate">
-                                Sunday Service
+                            {dayEvents.slice(0, 2).map((event, idx) => (
+                              <div
+                                key={event.id}
+                                className={`mt-1 rounded px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-xs font-medium truncate ${
+                                  idx === 0 
+                                    ? "bg-accent/20 text-accent-dark" 
+                                    : "bg-primary/10 text-foreground"
+                                }`}
+                                title={event.title}
+                              >
+                                {event.title}
                               </div>
-                            )}
-                            {isTuesday && (
-                              <div className="mt-1 rounded bg-primary/10 px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-xs font-medium text-foreground truncate">
-                                Midweek
-                              </div>
-                            )}
-                            {hasSpecialEvent && (
-                              <div className="mt-1 rounded bg-accent px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-xs font-medium text-accent-foreground truncate">
-                                Special Event
+                            ))}
+                            {dayEvents.length > 2 && (
+                              <div className="mt-1 text-[9px] sm:text-xs text-muted-foreground">
+                                +{dayEvents.length - 2} more
                               </div>
                             )}
                           </>

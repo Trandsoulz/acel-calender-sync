@@ -10,6 +10,8 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { slug } = await params;
+    const { searchParams } = new URL(request.url);
+    const view = searchParams.get("view"); // "month" for calendar view
 
     const calendar = await prisma.calendar.findUnique({
       where: { slug },
@@ -29,15 +31,34 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // For month view, get all events for the current month
+    let dateFilter = {};
+    if (view === "month") {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      dateFilter = {
+        startTime: {
+          gte: startOfMonth,
+          lte: endOfMonth,
+        },
+      };
+    } else {
+      // Default: only future events
+      dateFilter = {
+        startTime: { gte: new Date() },
+      };
+    }
+
     // Fetch events separately
     const events = await prisma.event.findMany({
       where: {
         calendarId: calendar.id,
         status: { not: "cancelled" },
-        startTime: { gte: new Date() }, // Only future events
+        ...dateFilter,
       },
       orderBy: { startTime: "asc" },
-      take: 10, // Limit for public view
+      take: view === "month" ? 100 : 10, // More events for month view
       select: {
         id: true,
         title: true,

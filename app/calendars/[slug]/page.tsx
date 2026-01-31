@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Navbar, Footer } from "@/app/_components/layout";
 import { Container } from "@/app/_components/ui/container";
 import { Button } from "@/app/_components/ui/button";
+import { formatDateForDisplay } from "@/lib/utils";
 
 interface CalendarInfo {
   id: string;
@@ -67,17 +68,6 @@ export default function PublicCalendarPage({
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatEventDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
   };
 
   if (loading) {
@@ -191,7 +181,7 @@ export default function PublicCalendarPage({
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-accent font-medium">
-                          {formatEventDate(event.startTime)}
+                          {formatDateForDisplay(event.startTime)}
                         </p>
                       </div>
                     </div>

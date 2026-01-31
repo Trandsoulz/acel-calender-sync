@@ -130,3 +130,79 @@ export const RELATIONSHIP_STATUSES = [
  * List of genders
  */
 export const GENDERS = ["male", "female"] as const;
+
+/**
+ * Default timezone for events (West Africa Time)
+ */
+export const DEFAULT_TIMEZONE = "Africa/Lagos";
+
+/**
+ * Format a UTC date to a datetime-local input value in Africa/Lagos timezone
+ */
+export function formatDateForInput(date: Date | string, timezone: string = DEFAULT_TIMEZONE): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  
+  const parts = formatter.formatToParts(d);
+  const getPart = (type: string) => parts.find(p => p.type === type)?.value || "00";
+  
+  // Format: YYYY-MM-DDTHH:mm (for datetime-local input)
+  return `${getPart("year")}-${getPart("month")}-${getPart("day")}T${getPart("hour")}:${getPart("minute")}`;
+}
+
+/**
+ * Parse a datetime-local input value (in Africa/Lagos timezone) to UTC Date
+ * The input is assumed to be in the specified timezone, and we need to store as UTC
+ */
+export function parseDateFromInput(dateTimeLocalValue: string, timezone: string = DEFAULT_TIMEZONE): Date {
+  // The datetime-local value is like "2026-02-15T18:00"
+  // We need to interpret this as Africa/Lagos time and convert to UTC
+  
+  // Parse the components
+  const [datePart, timePart] = dateTimeLocalValue.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute] = timePart.split(":").map(Number);
+  
+  // Create a date string that explicitly specifies the timezone
+  // Africa/Lagos is UTC+1 (no DST)
+  const isoString = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+  
+  // Create date in the specified timezone by using a workaround:
+  // Parse as UTC first, then adjust for the timezone offset
+  const tempDate = new Date(isoString + "Z"); // Parse as UTC
+  
+  // Get the offset for Africa/Lagos (typically +1 hour, no DST)
+  // Using a more reliable method to get the offset
+  const targetDate = new Date(isoString);
+  const utcDate = new Date(targetDate.toLocaleString("en-US", { timeZone: "UTC" }));
+  const tzDate = new Date(targetDate.toLocaleString("en-US", { timeZone: timezone }));
+  const offsetMs = utcDate.getTime() - tzDate.getTime();
+  
+  // Adjust the date by the offset
+  return new Date(tempDate.getTime() + offsetMs);
+}
+
+/**
+ * Format a date for display in Africa/Lagos timezone
+ */
+export function formatDateForDisplay(date: Date | string, timezone: string = DEFAULT_TIMEZONE): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  
+  return d.toLocaleString("en-US", {
+    timeZone: timezone,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}

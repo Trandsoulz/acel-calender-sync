@@ -4,7 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/app/_components/ui/logo";
-import { calculateAge } from "@/lib/utils";
+import { calculateAge, formatDateForInput, formatDateForDisplay, parseDateFromInput } from "@/lib/utils";
 
 interface Event {
   id: string;
@@ -264,13 +264,7 @@ export default function CalendarDetailPage({
                           )}
                         </h3>
                         <p className="text-sm text-[var(--muted-foreground)] mt-1">
-                          {new Date(event.startTime).toLocaleDateString("en-US", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
+                          {formatDateForDisplay(event.startTime, event.timezone || "Africa/Lagos")}
                           {event.location && ` • ${event.location}`}
                         </p>
                         {/* Targeting info */}
@@ -435,10 +429,10 @@ function EventModal({
   const [title, setTitle] = useState(event?.title || "");
   const [description, setDescription] = useState(event?.description || "");
   const [startTime, setStartTime] = useState(
-    event ? new Date(event.startTime).toISOString().slice(0, 16) : ""
+    event ? formatDateForInput(event.startTime, event.timezone || "Africa/Lagos") : ""
   );
   const [endTime, setEndTime] = useState(
-    event ? new Date(event.endTime).toISOString().slice(0, 16) : ""
+    event ? formatDateForInput(event.endTime, event.timezone || "Africa/Lagos") : ""
   );
   const [location, setLocation] = useState(event?.location || "");
   const [status, setStatus] = useState(event?.status || "confirmed");
@@ -454,11 +448,16 @@ function EventModal({
     setLoading(true);
     setError("");
 
+    // Parse the datetime-local values as Africa/Lagos timezone and convert to ISO strings
+    const startTimeUtc = parseDateFromInput(startTime, "Africa/Lagos").toISOString();
+    const endTimeUtc = parseDateFromInput(endTime, "Africa/Lagos").toISOString();
+
     const data = {
       title,
       description: description || null,
-      startTime,
-      endTime,
+      startTime: startTimeUtc,
+      endTime: endTimeUtc,
+      timezone: "Africa/Lagos",
       location: location || null,
       status,
       targetGenders,
