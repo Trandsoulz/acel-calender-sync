@@ -125,7 +125,6 @@ export default function PublicCalendarPage({
             )}
             <div className="flex justify-center gap-8 mt-6 text-muted-foreground">
               <span>{calendar?.eventCount} upcoming events</span>
-              <span>{calendar?.subscriberCount} subscribers</span>
             </div>
           </div>
 
@@ -161,26 +160,27 @@ export default function PublicCalendarPage({
                 {events.map((event) => (
                   <div
                     key={event.id}
-                    className="bg-muted rounded-xl p-6 hover:ring-2 hover:ring-accent/50 transition-all"
+                    className="bg-muted rounded-xl p-4 sm:p-6 hover:ring-2 hover:ring-accent/50 transition-all overflow-hidden"
                   >
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                      <div>
-                        <h3 className="text-xl font-semibold text-foreground">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-lg sm:text-xl font-semibold text-foreground break-words">
                           {event.title}
                         </h3>
                         {event.description && (
-                          <p className="text-muted-foreground mt-2">
+                          <p className="text-muted-foreground mt-2 text-sm sm:text-base break-words line-clamp-3">
                             {event.description}
                           </p>
                         )}
                         {event.location && (
-                          <p className="text-muted-foreground mt-2 flex items-center gap-2">
-                            <span>📍</span> {event.location}
+                          <p className="text-muted-foreground mt-2 flex items-start gap-2 text-sm sm:text-base">
+                            <span className="shrink-0">📍</span> 
+                            <span className="break-words">{event.location}</span>
                           </p>
                         )}
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-accent font-medium">
+                      <div className="text-left md:text-right shrink-0">
+                        <p className="text-accent font-medium text-sm sm:text-base">
                           {formatDateForDisplay(event.startTime)}
                         </p>
                       </div>

@@ -319,7 +319,7 @@ export default function SubscribePage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground">📱 Mobile Users - Important!</h3>
+                    <h3 className="font-semibold text-foreground">Mobile Users - Important!</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       After syncing, you may need to <strong className="text-foreground">enable the calendar</strong> in your app:
                     </p>
@@ -567,7 +567,8 @@ export default function SubscribePage() {
                         required
                         value={formData.dateOfBirth}
                         onChange={handleInputChange}
-                        className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                        className="w-full max-w-full rounded-lg border border-border bg-background px-3 sm:px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-accent appearance-none"
+                        style={{ minWidth: 0 }}
                       />
                       <p className="mt-1 text-xs text-muted-foreground">
                         Used to show age-appropriate events
