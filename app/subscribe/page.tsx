@@ -56,6 +56,7 @@ export default function SubscribePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [subscriptionUrls, setSubscriptionUrls] = useState<SubscriptionUrls | null>(null);
+  const [subscriberId, setSubscriberId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const handleInputChange = (
@@ -94,6 +95,7 @@ export default function SubscribePage() {
       }
 
       setSubscriptionUrls(data.urls);
+      setSubscriberId(data.subscriber.id);
       setIsSuccess(true);
     } catch (error) {
       console.error("Subscription error:", error);
@@ -111,8 +113,21 @@ export default function SubscribePage() {
     }
   };
 
-  const handleSync = (platform: string) => {
+  const handleSync = async (platform: string) => {
     if (!subscriptionUrls) return;
+
+    // Save the platform preference to the database
+    if (subscriberId) {
+      try {
+        await fetch("/api/subscribe/platform", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscriberId, platform }),
+        });
+      } catch (error) {
+        console.error("Failed to save platform:", error);
+      }
+    }
 
     switch (platform) {
       case "google":
