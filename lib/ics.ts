@@ -111,6 +111,29 @@ export async function generateIcsContent({
       status: event.status.toUpperCase() as "TENTATIVE" | "CONFIRMED" | "CANCELLED",
       calName: calendarName,
       productId: "hotr-calendar-sync",
+      // Reminder alarms: 3 days before, 1 day before, 1 hour before, 15 min before
+      alarms: [
+        {
+          action: "display" as const,
+          description: `Reminder: ${event.title} is in 3 days`,
+          trigger: { hours: 72, before: true },
+        },
+        {
+          action: "display" as const,
+          description: `Reminder: ${event.title} is tomorrow`,
+          trigger: { hours: 24, before: true },
+        },
+        {
+          action: "display" as const,
+          description: `Reminder: ${event.title} starts in 1 hour`,
+          trigger: { hours: 1, before: true },
+        },
+        {
+          action: "display" as const,
+          description: `Reminder: ${event.title} starts in 15 minutes`,
+          trigger: { minutes: 15, before: true },
+        },
+      ],
     };
   });
 
@@ -160,8 +183,8 @@ export function generateSubscriptionUrls(
     icsUrl,
     // Apple: webcal:// opens native Calendar app directly
     appleUrl: webcalUrl,
-    // Google: Use HTTPS URL (not webcal) - works better on Android
-    googleUrl: `https://calendar.google.com/calendar/r/settings/addbyurl?url=${encodeURIComponent(icsUrl)}`,
+    // Google: Use cid parameter with webcal URL (original working format)
+    googleUrl: `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`,
     // Outlook: Web URL that works everywhere (opens app on mobile if installed)
     outlookUrl: `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(icsUrl)}`,
   };
