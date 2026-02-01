@@ -130,8 +130,8 @@ export async function generateIcsContent({
         },
         {
           action: "display" as const,
-          description: `⏰ "${event.title}" is starting now!`,
-          trigger: { minutes: 10, before: true },
+          description: `⏰ "${event.title}" starts in 15 minutes!`,
+          trigger: { minutes: 15, before: true },
         },
       ],
     };
@@ -181,8 +181,9 @@ export function generateSubscriptionUrls(
 
   return {
     icsUrl,
-    googleUrl: `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`,
+    // All platforms can handle webcal:// protocol - opens their respective calendar apps directly
+    googleUrl: webcalUrl,
     appleUrl: webcalUrl,
-    outlookUrl: `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(icsUrl)}`,
+    outlookUrl: webcalUrl,
   };
 }

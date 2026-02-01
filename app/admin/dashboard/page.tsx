@@ -83,13 +83,13 @@ export default function AdminDashboardPage() {
       <header className="border-b border-[var(--border)] bg-[var(--card)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <Logo />
-          <div className="flex items-center gap-4">
-            <span className="text-[var(--muted-foreground)] text-sm">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="text-[var(--muted-foreground)] text-xs sm:text-sm hidden sm:inline">
               {admin?.email}
             </span>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
             >
               Logout
             </button>
@@ -99,40 +99,40 @@ export default function AdminDashboardPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-[var(--foreground)]">
+            <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">
               Dashboard
             </h1>
-            <p className="text-[var(--muted-foreground)] mt-1">
+            <p className="text-[var(--muted-foreground)] text-sm sm:text-base mt-1">
               Manage your calendars and events
             </p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-[var(--accent)] text-black font-medium rounded-lg hover:bg-[var(--accent)]/90 transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 bg-[var(--accent)] text-black font-medium rounded-lg hover:bg-[var(--accent)]/90 transition-colors text-center"
           >
             + New Calendar
           </button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
-            <p className="text-[var(--muted-foreground)] text-sm">Total Calendars</p>
-            <p className="text-3xl font-bold text-[var(--foreground)] mt-1">
+        <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-6">
+            <p className="text-[var(--muted-foreground)] text-xs sm:text-sm">Calendars</p>
+            <p className="text-xl sm:text-3xl font-bold text-[var(--foreground)] mt-1">
               {calendars.length}
             </p>
           </div>
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
-            <p className="text-[var(--muted-foreground)] text-sm">Total Events</p>
-            <p className="text-3xl font-bold text-[var(--foreground)] mt-1">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-6">
+            <p className="text-[var(--muted-foreground)] text-xs sm:text-sm">Events</p>
+            <p className="text-xl sm:text-3xl font-bold text-[var(--foreground)] mt-1">
               {calendars.reduce((sum, cal) => sum + cal._count.events, 0)}
             </p>
           </div>
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6">
-            <p className="text-[var(--muted-foreground)] text-sm">Total Subscribers</p>
-            <p className="text-3xl font-bold text-[var(--foreground)] mt-1">
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3 sm:p-6">
+            <p className="text-[var(--muted-foreground)] text-xs sm:text-sm">Subscribers</p>
+            <p className="text-xl sm:text-3xl font-bold text-[var(--foreground)] mt-1">
               {calendars.reduce((sum, cal) => sum + cal._count.subscribers, 0)}
             </p>
           </div>
@@ -162,14 +162,14 @@ export default function AdminDashboardPage() {
                 <Link
                   key={calendar.id}
                   href={`/admin/calendars/${calendar.id}`}
-                  className="block px-6 py-4 hover:bg-[var(--background)] transition-colors"
+                  className="block px-4 sm:px-6 py-4 hover:bg-[var(--background)] transition-colors active:bg-[var(--background)]"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-[var(--foreground)]">
+                  <div className="flex items-start sm:items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-medium text-[var(--foreground)] truncate">
                         {calendar.name}
                       </h3>
-                      <p className="text-sm text-[var(--muted-foreground)] mt-1">
+                      <p className="text-sm text-[var(--muted-foreground)] mt-1 truncate">
                         /{calendar.slug}
                         {!calendar.isPublic && (
                           <span className="ml-2 px-2 py-0.5 bg-yellow-500/10 text-yellow-500 text-xs rounded">
@@ -177,12 +177,17 @@ export default function AdminDashboardPage() {
                           </span>
                         )}
                       </p>
+                      <div className="flex items-center gap-4 text-xs text-[var(--muted-foreground)] mt-2 sm:hidden">
+                        <span>{calendar._count.events} events</span>
+                        <span>{calendar._count.subscribers} subs</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-6 text-sm text-[var(--muted-foreground)]">
+                    <div className="hidden sm:flex items-center gap-6 text-sm text-[var(--muted-foreground)] flex-shrink-0">
                       <span>{calendar._count.events} events</span>
                       <span>{calendar._count.subscribers} subscribers</span>
                       <span className="text-[var(--accent)]">→</span>
                     </div>
+                    <span className="text-[var(--accent)] sm:hidden flex-shrink-0">→</span>
                   </div>
                 </Link>
               ))}
