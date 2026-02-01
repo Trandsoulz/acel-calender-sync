@@ -184,8 +184,8 @@ export function generateSubscriptionUrls(
     icsUrl,
     // Apple: webcal:// opens native Calendar app directly
     appleUrl: webcalUrl,
-    // Google: Web URL that works everywhere (opens app on mobile if installed)
-    googleUrl: `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`,
+    // Google: Use HTTPS URL (not webcal) - works better on Android
+    googleUrl: `https://calendar.google.com/calendar/r/settings/addbyurl?url=${encodeURIComponent(icsUrl)}`,
     // Outlook: Web URL that works everywhere (opens app on mobile if installed)
     outlookUrl: `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(icsUrl)}`,
   };
