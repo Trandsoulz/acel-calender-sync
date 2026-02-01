@@ -111,30 +111,6 @@ export async function generateIcsContent({
       status: event.status.toUpperCase() as "TENTATIVE" | "CONFIRMED" | "CANCELLED",
       calName: calendarName,
       productId: "hotr-calendar-sync",
-      // Reminder alarms: 3 days before, 1 day before, 1 hour before, 15 min before
-      // Use hours instead of days to avoid malformed ICS duration format (-P3DT vs -PT72H)
-      alarms: [
-        {
-          action: "display" as const,
-          description: `Reminder: ${event.title} is in 3 days`,
-          trigger: { hours: 72, before: true },
-        },
-        {
-          action: "display" as const,
-          description: `Reminder: ${event.title} is tomorrow`,
-          trigger: { hours: 24, before: true },
-        },
-        {
-          action: "display" as const,
-          description: `Reminder: ${event.title} starts in 1 hour`,
-          trigger: { hours: 1, before: true },
-        },
-        {
-          action: "display" as const,
-          description: `Reminder: ${event.title} starts in 15 minutes`,
-          trigger: { minutes: 15, before: true },
-        },
-      ],
     };
   });
 
