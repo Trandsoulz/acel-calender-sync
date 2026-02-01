@@ -131,13 +131,14 @@ export default function SubscribePage() {
 
     switch (platform) {
       case "google":
-        window.open(subscriptionUrls.googleUrl, "_blank");
+        // Navigate directly to Google Calendar web (works better on mobile)
+        window.location.href = subscriptionUrls.googleUrl;
         break;
       case "apple":
         window.location.href = subscriptionUrls.appleUrl;
         break;
       case "outlook":
-        window.open(subscriptionUrls.outlookUrl, "_blank");
+        window.location.href = subscriptionUrls.outlookUrl;
         break;
       default:
         handleCopyLink();
