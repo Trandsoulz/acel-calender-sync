@@ -34,6 +34,7 @@ interface Subscriber {
   platform: string | null;
   interests: string[];
   subscribedAt: string;
+  feedToken: string;
 }
 
 interface Calendar {
@@ -63,6 +64,15 @@ export default function CalendarDetailPage({
   const [activeTab, setActiveTab] = useState<"events" | "subscribers">("events");
   const [showEventModal, setShowEventModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  const copyFeedUrl = async (feedToken: string) => {
+    const baseUrl = window.location.origin;
+    const feedUrl = `${baseUrl}/calendar/${calendar?.slug}/feed/${feedToken}.ics`;
+    await navigator.clipboard.writeText(feedUrl);
+    setCopiedToken(feedToken);
+    setTimeout(() => setCopiedToken(null), 2000);
+  };
 
   useEffect(() => {
     fetchCalendar();
@@ -360,9 +370,17 @@ export default function CalendarDetailPage({
                           {subscriber.country}
                         </span>
                       </div>
-                      <p className="text-xs text-[var(--muted-foreground)]">
-                        Joined {new Date(subscriber.subscribedAt).toLocaleDateString()}
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-[var(--muted-foreground)]">
+                          Joined {new Date(subscriber.subscribedAt).toLocaleDateString()}
+                        </p>
+                        <button
+                          onClick={() => copyFeedUrl(subscriber.feedToken)}
+                          className="text-xs text-[var(--accent)] hover:underline"
+                        >
+                          {copiedToken === subscriber.feedToken ? "✓ Copied!" : "Copy Feed URL"}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -395,6 +413,9 @@ export default function CalendarDetailPage({
                         <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
                           Joined
                         </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
+                          Feed
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border)]">
@@ -423,6 +444,14 @@ export default function CalendarDetailPage({
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--muted-foreground)]">
                             {new Date(subscriber.subscribedAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <button
+                              onClick={() => copyFeedUrl(subscriber.feedToken)}
+                              className="text-[var(--accent)] hover:underline"
+                            >
+                              {copiedToken === subscriber.feedToken ? "✓ Copied!" : "Copy URL"}
+                            </button>
                           </td>
                         </tr>
                       ))}

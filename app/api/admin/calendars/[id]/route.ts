@@ -37,6 +37,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             platform: true,
             interests: true,
             subscribedAt: true,
+            feedToken: true,
           },
         },
         _count: {
