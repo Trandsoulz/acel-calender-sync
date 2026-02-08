@@ -16,6 +16,10 @@ const footerLinks = {
   connect: [
     { name: "New Here?", href: "https://hotrportharcourt.com/new-here/" },
   ],
+  legal: [
+    { name: "Privacy Policy", href: "/privacy-policy" },
+    { name: "Terms of Service", href: "/terms-of-service" },
+  ],
 };
 
 export function Footer() {
@@ -23,7 +27,7 @@ export function Footer() {
     <footer className="border-t border-border bg-muted">
       <Container>
         <div className="py-12 md:py-16">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <Logo size="md" />
@@ -136,6 +140,25 @@ export function Footer() {
                     >
                       {link.name}
                     </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Legal Links */}
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                Legal
+              </h3>
+              <ul className="mt-4 space-y-3">
+                {footerLinks.legal.map((link) => (
+                  <li key={link.name}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-muted-foreground hover:text-accent transition-colors"
+                    >
+                      {link.name}
+                    </Link>
                   </li>
                 ))}
               </ul>
